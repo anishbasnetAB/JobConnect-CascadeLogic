@@ -1,9 +1,12 @@
 // main.jsx
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import App from './App.jsx';
+import { BrowserRouter } from 'react-router-dom';
 import { SnackbarProvider } from 'notistack';
-import AuthProvider from './context/AuthContext.jsx'; // ✅ Make sure this exists
+
+import App from './App.jsx';
+import Navbar from './pages/Navbar.jsx'; // ✅ Ensure correct path
+import AuthProvider from './context/AuthContext.jsx';
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
@@ -12,7 +15,10 @@ createRoot(document.getElementById('root')).render(
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
     >
       <AuthProvider>
-        <App />
+        <BrowserRouter>
+          <Navbar />
+          <App />
+        </BrowserRouter>
       </AuthProvider>
     </SnackbarProvider>
   </StrictMode>
