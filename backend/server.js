@@ -4,7 +4,6 @@ const dotenv = require('dotenv');
 const cors = require('cors');
 const path = require('path');
 const jobRoutes = require('./routes/jobRoutes');
-
 dotenv.config();
 
 const app = express();
@@ -16,7 +15,6 @@ app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // Serve uploaded images
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
-
 app.get('/api/health', (req, res) => {
   res.json({ status: 'OK' });
 });

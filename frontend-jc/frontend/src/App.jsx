@@ -8,6 +8,8 @@ import Login from './pages/Login';
 import VerifyEmail from './pages/VerifyEmail';
 import ForgotPassword from './pages/ForgetPassword';
 import ResetPassword from './pages/ResetPassword';
+import PostJob from './pages/Employer/PostJob';
+import MyJobs from './pages/Employer/MyJobs';
 
 function App() {
   return (
@@ -20,6 +22,23 @@ function App() {
         <Route path="/verify-email" element={<VerifyEmail />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/reset-password/:token" element={<ResetPassword />} />
+         <Route
+        path="/employer/my-jobs"
+        element={
+          <ProtectedRoute>
+            <MyJobs />
+          </ProtectedRoute>
+        }
+      />
+
+      <Route
+        path="/employer/my-jobs"
+        element={
+          <ProtectedRoute>
+            <MyJobs />
+          </ProtectedRoute>
+        }
+      />
       </Routes>
     </ThemeProvider>
   );
