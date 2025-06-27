@@ -28,7 +28,7 @@ function EditJob() {
     const fetchJob = async () => {
       try {
         const res = await axios.get('/jobs/my-jobs', {
-          headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+
         });
         const job = res.data.find(j => j._id === id);
         if (!job) {
@@ -61,8 +61,7 @@ function EditJob() {
         skills: data.skills ? data.skills.split(',').map(s => s.trim()) : [],
       };
 
-      await axios.put(`/jobs/${id}`, payload, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+
       });
 
       alert('Job updated');
@@ -98,7 +97,7 @@ function EditJob() {
                 render={({ field: f }) => (
                   <input
                     type={field === 'deadline' ? 'date' : 'text'}
-                    className={`w-full border rounded p-2 text-sm ${errors[field] ? 'border-red-500' : 'border-gray-300'}`}
+
                     {...f}
                   />
                 )}
@@ -114,7 +113,7 @@ function EditJob() {
               render={({ field }) => (
                 <textarea
                   rows={4}
-                  className={`w-full border rounded p-2 text-sm ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
+
                   {...field}
                 />
               )}
@@ -125,7 +124,8 @@ function EditJob() {
         <button
           type="submit"
           disabled={isSubmitting}
-          className={`w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+
+
         >
           {isSubmitting ? 'Updating...' : 'Update Job'}
         </button>
@@ -134,4 +134,6 @@ function EditJob() {
   );
 }
 
+
 export default EditJob;
+
