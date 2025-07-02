@@ -75,7 +75,7 @@ exports.signup = async (req, res) => {
 
 // ================== VERIFY EMAIL ==================
 exports.verifyEmail = async (req, res) => {
-  const { token } = req.query;
+ const { token } = req.query;
 
   try {
     // Try to find a user with this token
