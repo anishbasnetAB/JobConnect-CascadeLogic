@@ -1,3 +1,4 @@
+
 const Blog = require('../models/Blog');
 
 exports.createBlog = async (req, res) => {
@@ -90,3 +91,4 @@ exports.getBlogById = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch blog' });
   }
 };
+
