@@ -1,123 +1,94 @@
-import React, { useEffect, useState } from 'react';
-import axios from '../../api/axios';
-import { useParams } from 'react-router-dom';
-import profileIcon from '../../assets/pp.png';  // ✅ Import your profile icon
 
-const BlogDetail = () => {
-  const { blogId } = useParams();
-  const [blog, setBlog] = useState(null);
-  const [commentText, setCommentText] = useState('');
+const Blog = require('../models/Blog');
 
-  const fetchBlog = async () => {
-    try {
-      const res = await axios.get(`/blogs/${blogId}`);
-      setBlog(res.data);
-    } catch (err) {
-      console.error('Failed to fetch blog:', err);
+exports.createBlog = async (req, res) => {
+  try {
+    const images = req.files.map(f => f.filename);
+
+    // Ensure content is an array (in case frontend sends it as string accidentally)
+    let content = req.body.content;
+    if (typeof content === 'string') {
+      content = JSON.parse(content);  // Handle stringified array
     }
-  };
 
-  const handleLike = async () => {
-    try {
-      await axios.post(`/blogs/${blogId}/like`);
-      fetchBlog();
-    } catch (err) {
-      console.error('Failed to like blog:', err);
+    if (!Array.isArray(content) || content.length === 0) {
+      return res.status(400).json({ message: 'Content must be a non-empty array of paragraphs' });
     }
-  };
 
-  const handleComment = async () => {
-    if (!commentText.trim()) return;
+    const blog = new Blog({
+      employer: req.user.userId,
+      title: req.body.title,
+      content,
+      images
+    });
 
-    try {
-      await axios.post(`/blogs/${blogId}/comment`, { text: commentText });
-      setCommentText('');
-      fetchBlog();
-    } catch (err) {
-      console.error('Failed to comment:', err);
-    }
-  };
+    await blog.save();
 
-  useEffect(() => {
-    fetchBlog();
-  }, [blogId]);
-
-  if (!blog) return <p className="text-center mt-10 text-gray-500">Loading...</p>;
-
-  return (
-    <div className="max-w-3xl mx-auto mt-8 px-4">
-      <div className="bg-white rounded-lg shadow p-6">
-        <h1 className="text-3xl font-bold mb-1">{blog.title}</h1>
-        <p className="text-sm text-gray-500 mb-4">By {blog.employer?.name || 'Unknown'}</p>
-
-        <div className="space-y-3 text-justify text-gray-700">
-          {blog.content.map((para, idx) => (
-            <p key={idx}>{para}</p>
-          ))}
-        </div>
-
-        {blog.images && blog.images.length > 0 && (
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {blog.images.map((img, idx) => (
-              <img
-                key={idx}
-                src={`http://localhost:5000/uploads/${img}`}
-                alt={`Blog image ${idx + 1}`}
-                className="w-full h-64 object-cover rounded border"
-              />
-            ))}
-          </div>
-        )}
-
-        <div className="mt-4 flex items-center gap-2">
-          <span className="inline-block bg-gray-200 text-sm text-gray-700 px-2 py-1 rounded">
-            {blog.likes.length} Likes
-          </span>
-          <button
-            onClick={handleLike}
-            className="border border-gray-400 text-gray-700 px-3 py-1 rounded hover:bg-gray-100"
-          >
-            Like
-          </button>
-        </div>
-
-        <div className="mt-6">
-          <h2 className="text-xl font-semibold mb-2">Comments</h2>
-          <div className="space-y-3">
-            {blog.comments.map((c) => (
-              <div key={c._id} className="flex items-start gap-2 border-b border-gray-200 pb-2">
-                <img
-                  src={profileIcon}
-                  alt="Profile"
-                  className="w-8 h-8 rounded-full object-cover"
-                />
-                <div>
-                  <p className="text-sm text-gray-800 font-semibold">{c.commenter?.name || 'Anonymous'}</p>
-                  <p className="text-sm text-gray-700 text-justify">{c.text}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Add a comment"
-              className="w-full border rounded p-2 text-sm"
-              rows={3}
-            />
-            <button
-              onClick={handleComment}
-              className="mt-2 bg-blue-500 text-white px-4 py-1 rounded hover:bg-blue-600"
-            >
-              Post
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    res.status(201).json({ message: 'Blog created', blog });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to create blog' });
+  }
 };
 
-export default BlogDetail;
+exports.getBlogs = async (req, res) => {
+  try {
+    const blogs = await Blog.find().populate('employer', 'name').sort({ createdAt: -1 });
+    res.status(200).json(blogs);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch blogs' });
+  }
+};
+
+exports.likeBlog = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.blogId);
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+    if (blog.likes.includes(req.user.userId)) {
+      return res.status(400).json({ message: 'Already liked' });
+    }
+
+    blog.likes.push(req.user.userId);
+    await blog.save();
+    res.status(200).json({ message: 'Blog liked', likes: blog.likes.length });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to like blog' });
+  }
+};
+
+exports.commentBlog = async (req, res) => {
+  try {
+    const { text } = req.body;
+    const blog = await Blog.findById(req.params.blogId);
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+    blog.comments.push({
+      commenter: req.user.userId,
+      text
+    });
+
+    await blog.save();
+    res.status(200).json({ message: 'Comment added', comments: blog.comments });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to comment' });
+  }
+};
+
+exports.getBlogById = async (req, res) => {
+  try {
+    const blog = await Blog.findById(req.params.blogId)
+      .populate('employer', 'name')
+      .populate('comments.commenter', 'name');
+    if (!blog) return res.status(404).json({ message: 'Blog not found' });
+
+    res.status(200).json(blog);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Failed to fetch blog' });
+  }
+};
+
