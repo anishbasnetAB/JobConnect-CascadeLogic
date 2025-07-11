@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 
 function ViewApplicants() {
   const { jobId } = useParams();
+
   const [applicants, setApplicants] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -12,53 +13,53 @@ function ViewApplicants() {
   const [filterStatus, setFilterStatus] = useState('');
   const [sortBy, setSortBy] = useState('experience');
 
+  useEffect(() => {
+    fetchApplicants();
+  }, [jobId]);
+
+  useEffect(() => {
+    filterAndSortApplicants();
+  }, [filterRole, filterStatus, sortBy, applicants]);
+
   const fetchApplicants = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const res = await axios.get(/applications/${jobId}, {
-        headers: { Authorization: Bearer ${localStorage.getItem('token')} }
+      const { data } = await axios.get(`/applications/${jobId}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setApplicants(res.data);
-      setFiltered(res.data);
-    } catch (err) {
-      console.error(err);
+      setApplicants(data);
+      setFiltered(data);
+    } catch (error) {
+      console.error(error);
       alert('Failed to load applicants');
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchApplicants();
-  }, [jobId]);
-
-  useEffect(() => {
-    let data = [...applicants];
+  const filterAndSortApplicants = () => {
+    let results = [...applicants];
 
     if (filterRole) {
-      data = data.filter(app =>
+      results = results.filter(app =>
         app.role?.toLowerCase().includes(filterRole.toLowerCase())
       );
     }
 
     if (filterStatus) {
-      data = data.filter(app => app.status === filterStatus);
+      results = results.filter(app => app.status === filterStatus);
     }
 
     if (sortBy === 'name') {
-      data.sort((a, b) => (a.applicant?.name || '').localeCompare(b.applicant?.name || ''));
+      results.sort((a, b) => (a.applicant?.name || '').localeCompare(b.applicant?.name || ''));
     } else if (sortBy === 'date') {
-      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (sortBy === 'experience') {
-      data.sort((a, b) => {
-        const numA = parseExperience(a.experience);
-        const numB = parseExperience(b.experience);
-        return numB - numA;
-      });
+      results.sort((a, b) => parseExperience(b.experience) - parseExperience(a.experience));
     }
 
-    setFiltered(data);
-  }, [filterRole, filterStatus, sortBy, applicants]);
+    setFiltered(results);
+  };
 
   const parseExperience = (exp) => {
     if (!exp) return 0;
@@ -68,23 +69,23 @@ function ViewApplicants() {
 
   const updateStatus = async (appId, status) => {
     try {
-      await axios.patch(/applications/status/${appId}, { status }, {
-        headers: { Authorization: Bearer ${localStorage.getItem('token')} }
+      await axios.patch(`/applications/status/${appId}`, { status }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       fetchApplicants();
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       alert('Failed to update status');
     }
   };
 
   const updateNote = async (appId, note) => {
     try {
-      await axios.patch(/applications/note/${appId}, { note }, {
-        headers: { Authorization: Bearer ${localStorage.getItem('token')} }
+      await axios.patch(`/applications/note/${appId}`, { note }, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       alert('Failed to save note');
     }
   };
@@ -158,7 +159,7 @@ function ViewApplicants() {
                   <td className="p-3">
                     {app.cv ? (
                       <a
-                        href={http://localhost:5000/uploads/${app.cv}}
+                        href={`http://localhost:5000/uploads/${app.cv}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-blue-500 hover:underline"
@@ -211,4 +212,4 @@ function ViewApplicants() {
   );
 }
 
-export default ViewApplicants;
+export default ViewApplicants;
