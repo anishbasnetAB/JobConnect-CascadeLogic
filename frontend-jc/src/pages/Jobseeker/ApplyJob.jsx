@@ -2,16 +2,19 @@ import React, { useEffect, useState } from 'react';
 import axios from '../../api/axios';
 import { useParams, useNavigate } from 'react-router-dom';
 
+
 function ApplyJob() {
   const { jobId } = useParams();
   const navigate = useNavigate();
+
 
   const [job, setJob] = useState(null);
   const [role, setRole] = useState('');
   const [experience, setExperience] = useState('');
   const [cv, setCv] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [banner, setBanner] = useState({ message: '', type: '' }); // type: 'success' | 'error'
+  const [banner, setBanner] = useState({ message: '', type: '' });
+
 
   const fetchJob = async () => {
     try {
@@ -25,27 +28,47 @@ function ApplyJob() {
     }
   };
 
+
   useEffect(() => {
     fetchJob();
   }, [jobId]);
 
+
   const showBannerAndNavigate = (message, type) => {
     setBanner({ message, type });
-    setTimeout(() => {
-      navigate('/jobs');
-    }, 3000);
+    if (type === 'success') {
+      setTimeout(() => {
+        navigate('/jobs');
+      }, 3000);
+    }
   };
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setBanner({ message: '', type: '' });
+
+
+    // Custom validation
+    if (!role.trim() || !experience.trim() || !cv) {
+      return setBanner({ message: 'All fields including CV are required.', type: 'error' });
+    }
+
+
+    if (isNaN(experience)) {
+      return setBanner({ message: 'Experience must be a number.', type: 'error' });
+    }
+
+
+    setLoading(true);
+
 
     try {
       const formData = new FormData();
       formData.append('role', role);
       formData.append('experience', experience);
-      if (cv) formData.append('cv', cv);
+      formData.append('cv', cv);
+
 
       await axios.post(`/applications/${jobId}`, formData, {
         headers: {
@@ -53,6 +76,7 @@ function ApplyJob() {
           'Content-Type': 'multipart/form-data'
         }
       });
+
 
       showBannerAndNavigate('Application submitted successfully!', 'success');
     } catch (err) {
@@ -64,6 +88,7 @@ function ApplyJob() {
     }
   };
 
+
   if (loading && !job) {
     return (
       <div className="max-w-lg mx-auto mt-10 text-center">
@@ -72,6 +97,7 @@ function ApplyJob() {
       </div>
     );
   }
+
 
   return (
     <div className="max-w-lg mx-auto mt-10 bg-white shadow rounded p-6 relative">
@@ -87,11 +113,13 @@ function ApplyJob() {
         </div>
       )}
 
+
       {job ? (
         <>
           <h1 className="text-xl font-bold mb-2">Apply to {job.title}</h1>
           <h2 className="text-sm text-gray-600 mb-2">{job.companyName}</h2>
           <p className="text-sm text-gray-700 mb-4">{job.description}</p>
+
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -100,21 +128,21 @@ function ApplyJob() {
                 type="text"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                required
                 className="w-full border border-gray-300 rounded p-2 text-sm"
               />
             </div>
 
+
             <div>
-              <label className="block text-sm font-medium mb-1">Your Experience (e.g. 3 years)</label>
+              <label className="block text-sm font-medium mb-1">Your Experience (in years)</label>
               <input
                 type="text"
                 value={experience}
                 onChange={(e) => setExperience(e.target.value)}
-                required
                 className="w-full border border-gray-300 rounded p-2 text-sm"
               />
             </div>
+
 
             <div>
               <label className="block text-sm font-medium mb-1">Upload CV (PDF/DOC)</label>
@@ -126,6 +154,7 @@ function ApplyJob() {
               />
               {cv && <p className="text-xs text-gray-500 mt-1">{cv.name}</p>}
             </div>
+
 
             <button
               type="submit"
@@ -153,5 +182,6 @@ function ApplyJob() {
     </div>
   );
 }
+
 
 export default ApplyJob;
