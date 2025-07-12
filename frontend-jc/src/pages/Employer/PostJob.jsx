@@ -9,13 +9,13 @@ import { useNavigate } from 'react-router-dom';
 const schema = yup.object({
   title: yup.string().required('Job title is required'),
   companyName: yup.string().required('Company name is required'),
-  pay: yup.string().nullable(),
-  location: yup.string().nullable(),
-  skills: yup.string().nullable(),
-  description: yup.string().nullable(),
-  deadline: yup.date().nullable(),
-  responsibilities: yup.string().nullable(),
-  requirements: yup.string().nullable(),
+  pay: yup.string().required('Pay is required'),
+  location: yup.string().required('Location is required'),
+  skills: yup.string().required('Skills are required'),
+  description: yup.string().required('Job description is required'),
+  deadline: yup.date().required('Application deadline is required'),
+  responsibilities: yup.string().required('Responsibilities are required'),
+  requirements: yup.string().required('Requirements are required'),
 });
 
 function PostJob() {

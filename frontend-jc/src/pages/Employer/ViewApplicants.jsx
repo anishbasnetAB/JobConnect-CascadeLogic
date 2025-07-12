@@ -4,7 +4,6 @@ import { useParams } from 'react-router-dom';
 
 function ViewApplicants() {
   const { jobId } = useParams();
-
   const [applicants, setApplicants] = useState([]);
   const [filtered, setFiltered] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,53 +12,53 @@ function ViewApplicants() {
   const [filterStatus, setFilterStatus] = useState('');
   const [sortBy, setSortBy] = useState('experience');
 
-  useEffect(() => {
-    fetchApplicants();
-  }, [jobId]);
-
-  useEffect(() => {
-    filterAndSortApplicants();
-  }, [filterRole, filterStatus, sortBy, applicants]);
-
   const fetchApplicants = async () => {
-    setLoading(true);
     try {
-      const { data } = await axios.get(`/applications/${jobId}`, {
+      setLoading(true);
+      const res = await axios.get(`/applications/${jobId}`, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-      setApplicants(data);
-      setFiltered(data);
-    } catch (error) {
-      console.error(error);
+      setApplicants(res.data);
+      setFiltered(res.data);
+    } catch (err) {
+      console.error(err);
       alert('Failed to load applicants');
     } finally {
       setLoading(false);
     }
   };
 
-  const filterAndSortApplicants = () => {
-    let results = [...applicants];
+  useEffect(() => {
+    fetchApplicants();
+  }, [jobId]);
+
+  useEffect(() => {
+    let data = [...applicants];
 
     if (filterRole) {
-      results = results.filter(app =>
+      data = data.filter(app =>
         app.role?.toLowerCase().includes(filterRole.toLowerCase())
       );
     }
 
     if (filterStatus) {
-      results = results.filter(app => app.status === filterStatus);
+      data = data.filter(app => app.status === filterStatus);
     }
 
     if (sortBy === 'name') {
-      results.sort((a, b) => (a.applicant?.name || '').localeCompare(b.applicant?.name || ''));
+      data.sort((a, b) => (a.applicant?.name || '').localeCompare(b.applicant?.name || ''));
     } else if (sortBy === 'date') {
-      results.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      data.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     } else if (sortBy === 'experience') {
-      results.sort((a, b) => parseExperience(b.experience) - parseExperience(a.experience));
+      data.sort((a, b) => {
+        const numA = parseExperience(a.experience);
+        const numB = parseExperience(b.experience);
+        return numB - numA;
+      });
     }
 
-    setFiltered(results);
-  };
+    setFiltered(data);
+  }, [filterRole, filterStatus, sortBy, applicants]);
 
   const parseExperience = (exp) => {
     if (!exp) return 0;
@@ -73,8 +72,8 @@ function ViewApplicants() {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
       fetchApplicants();
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert('Failed to update status');
     }
   };
@@ -84,8 +83,8 @@ function ViewApplicants() {
       await axios.patch(`/applications/note/${appId}`, { note }, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
       alert('Failed to save note');
     }
   };
