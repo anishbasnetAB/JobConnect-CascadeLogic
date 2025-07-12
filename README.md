@@ -46,6 +46,8 @@ Job Connect is a fully functional Job Portal web application built using the MER
 | Form Handling  | React Hook Form, Yup |
 
 ## Installation and Setup
+backend>>npm i>npm start
+frontend>>npm i>npm run dev
 
 ### Prerequisites
 
@@ -56,7 +58,7 @@ Job Connect is a fully functional Job Portal web application built using the MER
 
 ### Environment Variables
 
-Create a `.env` file in the `/server` directory with the following:
+Create a `.env` file in the `/backend` directory with the following:
 
 ```env
 PORT=5000
