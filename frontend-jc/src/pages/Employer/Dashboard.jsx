@@ -67,7 +67,7 @@ const EmployerDashboard = () => {
         </div>
 
         <div className="bg-white shadow rounded p-4">
-          <h2 className="text-lg font-semibold mb-2">Jobs by Country</h2>
+          <h2 className="text-lg font-semibold mb-2">Jobs by Location</h2>
           <div className="space-y-1">
             {Object.entries(stats.jobs.byCountry).map(([country, count]) => (
               <p key={country} className="text-sm text-gray-700">

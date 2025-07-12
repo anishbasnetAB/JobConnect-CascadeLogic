@@ -11,8 +11,16 @@ const schema = yup.object({
   pay: yup.string().nullable(),
   location: yup.string().nullable(),
   skills: yup.string().nullable(),
-  description: yup.string().nullable(),
-  deadline: yup.date().nullable(),
+  description: yup
+    .string()
+    .required('Description is required')
+    .test('non-empty-lines', 'Each line in the description must be non-empty', (value) => {
+      if (!value) return false;
+      const lines = value.split('\n').map(line => line.trim());
+      return lines.length > 0 && lines.every(line => line.length > 0);
+    }),
+  deadline: yup.string().required('Deadline is required'),
+
 });
 
 function EditJob() {
@@ -25,31 +33,32 @@ function EditJob() {
   });
 
   useEffect(() => {
-    const fetchJob = async () => {
-      try {
-        const res = await axios.get('/jobs/my-jobs', {
+const fetchJob = async () => {
+  try {
+    const res = await axios.get('/jobs/my-jobs', {
+      headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
+    });
+    const job = res.data.find(j => j._id === id);
+    if (!job) {
+      alert('Job not found');
+      navigate('/employer/my-jobs');
+      return;
+    }
 
-        });
-        const job = res.data.find(j => j._id === id);
-        if (!job) {
-          alert('Job not found');
-          navigate('/employer/my-jobs');
-          return;
-        }
-        setValue('title', job.title);
-        setValue('companyName', job.companyName);
-        setValue('pay', job.pay);
-        setValue('location', job.location);
-        setValue('skills', job.skills?.join(', '));
-        setValue('description', job.description);
-        setValue('deadline', job.deadline ? job.deadline.slice(0,10) : '');
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        alert('Failed to load job');
-        navigate('/employer/my-jobs');
-      }
-    };
+    setValue('title', job.title);
+    setValue('companyName', job.companyName);
+    setValue('pay', job.pay);
+    setValue('location', job.location);
+    setValue('skills', job.skills?.join(', '));
+    setValue('description', Array.isArray(job.description) ? job.description.join('\n') : job.description || '');
+    setValue('deadline', job.deadline ? job.deadline.slice(0, 10) : '');
+    setLoading(false);
+  } catch (err) {
+    console.error(err);
+    alert('Failed to load job');
+    navigate('/employer/my-jobs');
+  }
+};
 
     fetchJob();
   }, [id, navigate, setValue]);
@@ -61,7 +70,8 @@ function EditJob() {
         skills: data.skills ? data.skills.split(',').map(s => s.trim()) : [],
       };
 
-
+      await axios.put(`/jobs/${id}`, payload, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       });
 
       alert('Job updated');
@@ -97,7 +107,7 @@ function EditJob() {
                 render={({ field: f }) => (
                   <input
                     type={field === 'deadline' ? 'date' : 'text'}
-
+                    className={`w-full border rounded p-2 text-sm ${errors[field] ? 'border-red-500' : 'border-gray-300'}`}
                     {...f}
                   />
                 )}
@@ -113,7 +123,7 @@ function EditJob() {
               render={({ field }) => (
                 <textarea
                   rows={4}
-
+                  className={`w-full border rounded p-2 text-sm ${errors.description ? 'border-red-500' : 'border-gray-300'}`}
                   {...field}
                 />
               )}
@@ -124,8 +134,7 @@ function EditJob() {
         <button
           type="submit"
           disabled={isSubmitting}
-
-
+          className={`w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600 ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
         >
           {isSubmitting ? 'Updating...' : 'Update Job'}
         </button>
@@ -134,6 +143,4 @@ function EditJob() {
   );
 }
 
-
 export default EditJob;
-
