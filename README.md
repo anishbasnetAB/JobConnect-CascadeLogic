@@ -46,8 +46,8 @@ Job Connect is a fully functional Job Portal web application built using the MER
 | Form Handling  | React Hook Form, Yup |
 
 ## Installation and Setup
-backend>>npm i>npm start
-frontend>>npm i>npm run dev
+- backend>>npm i>npm start
+- frontend>>npm i>npm run dev
 
 ### Prerequisites
 
