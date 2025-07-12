@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const upload = require('../utils/upload');
+const authController = require('../controllers/authController')
 const { authMiddleware } = require('../middleware/auth');
 
 const {
@@ -22,4 +23,7 @@ router.get('/protected', authMiddleware, (req, res) => {
   res.status(200).json({ message: 'Access granted', user: req.user });
 });
 
+router.put('/profile', authMiddleware, authController.updateProfile);
+
+router.put('/profile', authMiddleware, upload.single('companyCard'), authController.updateProfile);
 module.exports = router;

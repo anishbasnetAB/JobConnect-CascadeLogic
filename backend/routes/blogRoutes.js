@@ -13,7 +13,19 @@ router.post(
   blogController.createBlog
 );
 
+router.post(
+  '/:blogId/like',
+  authMiddleware,
+  authorizeRoles('jobseeker', 'employer'), // ✅ allow both
+  blogController.likeBlog
+);
 
+router.post(
+  '/:blogId/comment',
+  authMiddleware,
+  authorizeRoles('jobseeker', 'employer'), // ✅ allow both
+  blogController.commentBlog
+);
 // Get all blogs
 router.get('/', blogController.getBlogs);
 
@@ -23,4 +35,4 @@ router.post('/:blogId/comment', authMiddleware, authorizeRoles('jobseeker'), blo
 
 router.get('/:blogId', blogController.getBlogById);
 
-module.exports = router;
+module.exports = router;

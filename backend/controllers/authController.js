@@ -3,6 +3,7 @@ const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const nodemailer = require('nodemailer');
 const User = require('../models/User');
+const sendEmail = require('../utils/sendEmail');
 
 // Transporter setup
 const transporter = nodemailer.createTransport({
@@ -49,19 +50,13 @@ exports.signup = async (req, res) => {
 
     const verificationLink = `${process.env.BASE_URL}/verify-email?token=${verificationToken}`;
 
-    await transporter.sendMail({
-      from: `"Job Connect" <${process.env.EMAIL_USER}>`,
-      to: newUser.email,
-      subject: 'Verify Your Email - Job Connect',
-      html: `
-        <h2>Hello ${newUser.name},</h2>
-        <p>Thanks for signing up on <strong>Job Connect</strong>.</p>
-        <p>Please verify your email by clicking the link below:</p>
-        <a href="${verificationLink}" style="color: #2b6cb0;">Verify Email</a>
-        <p>This link will expire after first use.</p>
-        <img src="../upload/logo.png" >
-      `,
-    });
+    await sendEmail(newUser.email, 'Verify Your Email - Job Connect', `
+      <h2>Hello ${newUser.name},</h2>
+      <p>Thanks for signing up on <strong>Job Connect</strong>.</p>
+      <p>Please verify your email by clicking the link below:</p>
+      <a href="${verificationLink}" style="color: #2b6cb0;">Verify Email</a>
+      <p>This link will expire after first use.</p>
+    `);
 
     return res.status(201).json({
       message: 'User registered successfully. Verification link sent to email.',
@@ -73,9 +68,10 @@ exports.signup = async (req, res) => {
   }
 };
 
+
 // ================== VERIFY EMAIL ==================
 exports.verifyEmail = async (req, res) => {
- const { token } = req.query;
+  const { token } = req.query;
 
   try {
     // Try to find a user with this token
@@ -209,5 +205,47 @@ exports.resetPassword = async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: 'Reset failed' });
+  }
+};
+
+exports.updateProfile = async (req, res) => {
+  const userId = req.user.userId;
+  const { name, age, country, password } = req.body;
+  const file = req.file;
+
+  try {
+    const updateData = {};
+    if (name) updateData.name = name;
+    if (age) updateData.age = age;
+    if (country) updateData.country = country;
+    if (password) {
+      const hashed = await bcrypt.hash(password, 10);
+      updateData.password = hashed;
+    }
+    if (req.user.userType === 'employer' && file) {
+      updateData.companyCard = file.filename;
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(userId, updateData, { new: true });
+
+    if (!updatedUser) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.status(200).json({
+      message: 'Profile updated successfully',
+      user: {
+        id: updatedUser._id,
+        name: updatedUser.name,
+        age: updatedUser.age,
+        email: updatedUser.email,
+        country: updatedUser.country,
+        userType: updatedUser.userType,
+        companyCard: updatedUser.companyCard
+      }
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: 'Profile update failed' });
   }
 };
