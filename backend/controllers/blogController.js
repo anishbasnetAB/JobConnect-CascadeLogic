@@ -1,25 +1,39 @@
-
 const Blog = require('../models/Blog');
+const sanitizeHtml = require('sanitize-html');
 
+// ====================== CREATE BLOG ======================
 exports.createBlog = async (req, res) => {
   try {
     const images = req.files.map(f => f.filename);
-
-    // Ensure content is an array (in case frontend sends it as string accidentally)
     let content = req.body.content;
+
+    // Ensure content is an array
     if (typeof content === 'string') {
-      content = JSON.parse(content);  // Handle stringified array
+      content = JSON.parse(content);
     }
 
     if (!Array.isArray(content) || content.length === 0) {
       return res.status(400).json({ message: 'Content must be a non-empty array of paragraphs' });
     }
 
+    // ✅ Sanitize blog title and content paragraphs
+    const sanitizedTitle = sanitizeHtml(req.body.title, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
+    const sanitizedContent = content.map(paragraph =>
+      sanitizeHtml(paragraph, {
+        allowedTags: [],
+        allowedAttributes: {},
+      })
+    );
+
     const blog = new Blog({
       employer: req.user.userId,
-      title: req.body.title,
-      content,
-      images
+      title: sanitizedTitle,
+      content: sanitizedContent,
+      images,
     });
 
     await blog.save();
@@ -31,6 +45,7 @@ exports.createBlog = async (req, res) => {
   }
 };
 
+// ====================== GET ALL BLOGS ======================
 exports.getBlogs = async (req, res) => {
   try {
     const blogs = await Blog.find().populate('employer', 'name').sort({ createdAt: -1 });
@@ -41,6 +56,7 @@ exports.getBlogs = async (req, res) => {
   }
 };
 
+// ====================== LIKE BLOG ======================
 exports.likeBlog = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.blogId);
@@ -59,15 +75,21 @@ exports.likeBlog = async (req, res) => {
   }
 };
 
+// ====================== COMMENT ON BLOG ======================
 exports.commentBlog = async (req, res) => {
   try {
-    const { text } = req.body;
     const blog = await Blog.findById(req.params.blogId);
     if (!blog) return res.status(404).json({ message: 'Blog not found' });
 
+    // ✅ Sanitize comment text
+    const sanitizedText = sanitizeHtml(req.body.text, {
+      allowedTags: [],
+      allowedAttributes: {},
+    });
+
     blog.comments.push({
       commenter: req.user.userId,
-      text
+      text: sanitizedText,
     });
 
     await blog.save();
@@ -78,11 +100,13 @@ exports.commentBlog = async (req, res) => {
   }
 };
 
+// ====================== GET BLOG BY ID ======================
 exports.getBlogById = async (req, res) => {
   try {
     const blog = await Blog.findById(req.params.blogId)
       .populate('employer', 'name')
       .populate('comments.commenter', 'name');
+
     if (!blog) return res.status(404).json({ message: 'Blog not found' });
 
     res.status(200).json(blog);
@@ -91,4 +115,4 @@ exports.getBlogById = async (req, res) => {
     res.status(500).json({ message: 'Failed to fetch blog' });
   }
 };
-
+  
