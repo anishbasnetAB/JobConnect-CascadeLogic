@@ -16,6 +16,7 @@ resetPasswordExpires: Date,
   companyCard: String, // image filename
   isVerified: { type: Boolean, default: false },
   verificationToken: String,
+  savedJobs: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Job' }],
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
