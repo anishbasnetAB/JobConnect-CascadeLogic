@@ -46,6 +46,7 @@ Job Connect is a fully functional Job Portal web application built using the MER
 | Form Handling  | React Hook Form, Yup |
 
 ## Installation and Setup
+- install docker >> run these command on cmd>> docker run -d --name redis-server -p 6379:6379 redis >> docker start redis-server
 - backend>>npm i>npm start
 - frontend>>npm i>npm run dev
 
